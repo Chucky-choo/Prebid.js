@@ -1,14 +1,14 @@
 # Overview
 
 ```
-Module Name: digital Matter Bidder Adapter
-Module Type: digital Matter Bidder Adapter
-Maintainer: developer@digital_matter.ai
+Module Name: Digital Matter Bidder Adapter
+Module Type: Digital Matter Bidder Adapter
+Maintainer: prebid@digitalmatter.ai
 ```
 
 # Description
 
-Module that connects to digital_matter.com demand sources
+Module that connects to digitalmatter.ai demand sources
 
 # Test Parameters
 ```
@@ -22,9 +22,9 @@ var adUnits = [
         },
         bids: [
             {
-                bidder: 'digital_matter',
+                bidder: 'digitalmatter',
                 params: {
-                    env: 'digital_matter',
+                    env: 'digitalmatter',
                     pid: '40',
                     ext: {}
                 }
@@ -42,9 +42,9 @@ var adUnits = [
             }
         },
         bids: [{
-            bidder: 'digital_matter',
+            bidder: 'digitalmatter',
             params: {
-                env: 'digital_matter',
+                env: 'digitalmatter',
                 pid: '40',
                 ext: {}
             }

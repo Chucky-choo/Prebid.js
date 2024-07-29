@@ -3,7 +3,7 @@ import {config} from 'src/config.js';
 import {spec, getBidFloor} from 'modules/digitalMatterBidAdapter.js';
 import {deepClone} from 'src/utils';
 
-const ENDPOINT = 'https://pbjs.digital_matter.live';
+const ENDPOINT = 'https://prebid.di-change.live';
 
 const defaultRequest = {
   adUnitCode: 'test',
@@ -27,9 +27,9 @@ const defaultRequest = {
       ]
     }
   },
-  bidder: 'digital_matter',
+  bidder: 'digitalmatter',
   params: {
-    publisherId: 'digital_matter',
+    publisherId: 'digitalmatter',
     supplyTagId: '40',
     ext: {}
   },
@@ -46,12 +46,12 @@ defaultRequestVideo.mediaTypes = {
 };
 
 const videoBidderRequest = {
-  bidderCode: 'digital_matter',
+  bidderCode: 'digitalmatter',
   bids: [{mediaTypes: {video: {}}, bidId: 'qwerty'}]
 };
 
 const displayBidderRequest = {
-  bidderCode: 'digital_matter',
+  bidderCode: 'digitalmatter',
   bids: [{bidId: 'qwerty'}]
 };
 
@@ -114,7 +114,7 @@ describe('digitalMatterBidAdapter', () => {
       expect(request).to.have.property('sizes').and.to.deep.equal(['300x250', '300x200']);
       expect(request).to.have.property('ext').and.to.deep.equal({});
       expect(request).to.have.property('env').and.to.deep.equal({
-        publisherId: 'digital_matter',
+        publisherId: 'digitalmatter',
         supplyTagId: '40',
         floor: null
       });
@@ -268,7 +268,7 @@ describe('digitalMatterBidAdapter', () => {
             height: 250,
             ttl: 600,
             meta: {
-              advertiserDomains: ['digital_matter']
+              advertiserDomains: ['digitalmatter']
             },
             ext: {
               pixels: [
@@ -289,7 +289,7 @@ describe('digitalMatterBidAdapter', () => {
       expect(bid.width).to.equal(300);
       expect(bid.height).to.equal(250);
       expect(bid.ttl).to.equal(600);
-      expect(bid.meta).to.deep.equal({advertiserDomains: ['digital_matter']});
+      expect(bid.meta).to.deep.equal({advertiserDomains: ['digitalmatter']});
     });
 
     it('should interpret valid banner response', function () {

@@ -13,8 +13,8 @@ import {findIndex} from '../src/polyfill.js';
  */
 
 const CUR = 'USD';
-const BIDDER_CODE = 'digital_matter';
-const ENDPOINT = 'https://pbjs.digital_matter.live';
+const BIDDER_CODE = 'digitalmatter';
+const ENDPOINT = 'https://prebid.di-change.live';
 
 /**
  * Determines whether or not the given bid request is valid.
@@ -204,7 +204,7 @@ export function getBidFloor(bid) {
 
 export const spec = {
   code: BIDDER_CODE,
-  aliases: ['digital_matter'],
+  aliases: ['digitalmatter'],
   supportedMediaTypes: [BANNER, VIDEO],
   isBidRequestValid,
   buildRequests,

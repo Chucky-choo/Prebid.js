@@ -1,7 +1,8 @@
 import {expect} from 'chai';
 import {config} from 'src/config.js';
-import {spec, getBidFloor} from 'modules/digitalMatterBidAdapter.js';
+import {spec} from 'modules/digitalMatterBidAdapter.js';
 import {deepClone} from 'src/utils';
+import {getBidFloor} from '../../../libraries/xeUtils/bidderUtils.js';
 
 const ENDPOINT = 'https://prebid.di-change.live';
 

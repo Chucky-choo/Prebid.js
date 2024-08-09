@@ -2,13 +2,6 @@ import {deepAccess, getBidIdParameter, isFn, logError, isArray, parseSizesInput}
 import {getAdUnitSizes} from '../sizeUtils/sizeUtils.js';
 import {findIndex} from '../../src/polyfill.js';
 
-/**
- * Get valid floor value from getFloor fuction.
- *
- * @param {Object} bid Current bid request.
- * @param currency
- * @return {null|Number} Returns floor value when bid.getFloor is function and returns valid floor object with USD currency, otherwise returns null.
- */
 export function getBidFloor(bid, currency = 'USD') {
   if (!isFn(bid.getFloor)) {
     return null;
@@ -27,12 +20,6 @@ export function getBidFloor(bid, currency = 'USD') {
   return null;
 }
 
-/**
- * Determines whether or not the given bid request is valid.
- *
- * @param {BidRequest} bid The bid params to validate.
- * @return boolean True  if this is a valid bid, and false otherwise.
- */
 export function isBidRequestValid(bid) {
   if (bid && typeof bid.params !== 'object') {
     logError('Params is not defined or is incorrect in the bidder settings');
@@ -52,12 +39,6 @@ export function isBidRequestValid(bid) {
   return true;
 }
 
-/**
- * Make a server request from the list of BidRequests.
- *
- * @param {validBidRequest?pbjs_debug=trues[]} - an array of bids
- * @return ServerRequest Info describing the request to the server.
- */
 export function buildRequests(validBidRequests, bidderRequest, endpoint) {
   const {refererInfo = {}, gdprConsent = {}, uspConsent} = bidderRequest;
   const requests = validBidRequests.map(req => {
@@ -129,12 +110,6 @@ export function buildRequests(validBidRequests, bidderRequest, endpoint) {
   };
 }
 
-/**
- * Unpack the response from the server into a list of bids.
- *
- * @param {ServerResponse} serverResponse A successful response from the server.
- * @return {Bid[]} An array of bids which were nested inside the server.
- */
 export function interpretResponse(serverResponse, {bidderRequest}) {
   const response = [];
   if (!isArray(deepAccess(serverResponse, 'body.data'))) {
@@ -159,13 +134,6 @@ export function interpretResponse(serverResponse, {bidderRequest}) {
   return response;
 }
 
-/**
- * Register the user sync pixels which should be dropped after the auction.
- *
- * @param {SyncOptions} syncOptions Which user syncs are allowed?
- * @param {ServerResponse[]} serverResponses List of server's responses.
- * @return {UserSync[]} The user syncs which should be dropped.
- */
 export function getUserSyncs(syncOptions, serverResponses, gdprConsent = {}, uspConsent = '') {
   const syncs = [];
   const pixels = deepAccess(serverResponses, '0.body.data.0.ext.pixels');

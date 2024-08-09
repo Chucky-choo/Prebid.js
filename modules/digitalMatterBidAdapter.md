@@ -3,12 +3,8 @@
 ```
 Module Name: Digital Matter Bidder Adapter
 Module Type: Digital Matter Bidder Adapter
-Maintainer: prebid@digitalmatter.ai
+Maintainer: di-change@digitalmatter.ai
 ```
-
-# Description
-
-Module that connects to digitalmatter.ai demand sources
 
 # Test Parameters
 ```

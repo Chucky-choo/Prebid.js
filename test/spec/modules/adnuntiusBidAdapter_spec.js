@@ -1,12 +1,13 @@
 // import or require modules necessary for the test, e.g.:
 import { expect } from 'chai'; // may prefer 'assert' in place of 'expect'
-import { misc, spec } from 'modules/adnuntiusBidAdapter.js';
+import { spec } from 'modules/adnuntiusBidAdapter.js';
 import { newBidder } from 'src/adapters/bidderFactory.js';
-import {config, newConfig} from 'src/config.js';
+import {config} from 'src/config.js';
 import * as utils from 'src/utils.js';
 import { getStorageManager } from 'src/storageManager.js';
 import { getGlobal } from '../../../src/prebidGlobal';
 import {getUnixTimestampFromNow, getWindowTop} from 'src/utils.js';
+import { getWinDimensions } from '../../../src/utils';
 
 describe('adnuntiusBidAdapter', function () {
   const URL = 'https://ads.adnuntius.delivery/i?tzo=';
@@ -48,15 +49,16 @@ describe('adnuntiusBidAdapter', function () {
   });
 
   const tzo = new Date().getTimezoneOffset();
-  const win = getWindowTop() || window;
-  const screen = win.screen.availWidth + 'x' + win.screen.availHeight;
-  const viewport = win.innerWidth + 'x' + win.innerHeight;
-  const ENDPOINT_URL_BASE = `${URL}${tzo}&format=prebid&screen=${screen}&viewport=${viewport}`;
+  const winDimensions = getWinDimensions();
+  const screen = winDimensions.screen.availWidth + 'x' + winDimensions.screen.availHeight;
+  const viewport = winDimensions.innerWidth + 'x' + winDimensions.innerHeight;
+  const prebidVersion = window.$$PREBID_GLOBAL$$.version;
+  const ENDPOINT_URL_BASE = `${URL}${tzo}&format=prebid&pbv=${prebidVersion}&screen=${screen}&viewport=${viewport}`;
   const ENDPOINT_URL = `${ENDPOINT_URL_BASE}&userId=${usi}`;
-  const LOCALHOST_URL = `http://localhost:8078/i?tzo=${tzo}&format=prebid&screen=${screen}&viewport=${viewport}&userId=${usi}`;
+  const LOCALHOST_URL = `http://localhost:8078/i?tzo=${tzo}&format=prebid&pbv=${prebidVersion}&screen=${screen}&viewport=${viewport}&userId=${usi}`;
   const ENDPOINT_URL_NOCOOKIE = `${ENDPOINT_URL_BASE}&userId=${usi}&noCookies=true`;
   const ENDPOINT_URL_SEGMENTS = `${ENDPOINT_URL_BASE}&segments=segment1,segment2,segment3&userId=${usi}`;
-  const ENDPOINT_URL_CONSENT = `${EURO_URL}${tzo}&format=prebid&consentString=consentString&gdpr=1&screen=${screen}&viewport=${viewport}&userId=${usi}`;
+  const ENDPOINT_URL_CONSENT = `${EURO_URL}${tzo}&format=prebid&pbv=${prebidVersion}&consentString=consentString&gdpr=1&screen=${screen}&viewport=${viewport}&userId=${usi}`;
   const adapter = newBidder(spec);
 
   const bidderRequests = [
@@ -344,10 +346,11 @@ describe('adnuntiusBidAdapter', function () {
       'auId': '0000000000000551',
       'targetId': 'adn-0000000000000551',
       'nativeJson': {
-        'link': {
-          'url': 'https://whatever.com'
-        },
-        'assets': [
+        'ortb': {
+          'link': {
+            'url': 'https://whatever.com'
+          },
+          'assets': [
           {
             'id': 1,
             'required': 1,
@@ -355,6 +358,7 @@ describe('adnuntiusBidAdapter', function () {
               'url': 'http://something.com/something.png'
             }
           }]
+        }
       },
       'matchedAdCount': 1,
       'responseId': '',
@@ -1249,18 +1253,36 @@ describe('adnuntiusBidAdapter', function () {
       config.setBidderConfig({
         bidders: ['adnuntius'],
       });
+
       const req = [
         {
           bidId: 'adn-000000000008b6bc',
           bidder: 'adnuntius',
           params: {
             auId: '000000000008b6bc',
-            network: 'adnuntius',
-            userId: 'different_user_id'
+            network: 'adnuntius'
           }
         }
-      ]
-      const request = config.runWithBidder('adnuntius', () => spec.buildRequests(req, { bids: req }));
+      ];
+      let request = config.runWithBidder('adnuntius', () => spec.buildRequests(req, { bids: req }));
+      expect(request.length).to.equal(1);
+      expect(request[0]).to.have.property('url')
+      expect(request[0].url).to.equal(`${ENDPOINT_URL_BASE}&userId=${usi}`);
+
+      const ortb2 = {user: {ext: {eids: [{source: 'a', uids: [{id: '123', atype: 1}]}, {source: 'b', uids: [{id: '456', atype: 3, ext: {some: '1'}}]}]}}};
+      request = config.runWithBidder('adnuntius', () => spec.buildRequests(req, { bids: req, ortb2: ortb2 }));
+      expect(request.length).to.equal(1);
+      expect(request[0]).to.have.property('url')
+      expect(request[0].url).to.equal(`${ENDPOINT_URL_BASE}&userId=${usi}&eids=%5B%7B%22source%22%3A%22a%22%2C%22uids%22%3A%5B%7B%22id%22%3A%22123%22%2C%22atype%22%3A1%7D%5D%7D%2C%7B%22source%22%3A%22b%22%2C%22uids%22%3A%5B%7B%22id%22%3A%22456%22%2C%22atype%22%3A3%2C%22ext%22%3A%7B%22some%22%3A%221%22%7D%7D%5D%7D%5D`);
+
+      ortb2.user.id = "ortb2userid"
+      request = config.runWithBidder('adnuntius', () => spec.buildRequests(req, { bids: req, ortb2: ortb2 }));
+      expect(request.length).to.equal(1);
+      expect(request[0]).to.have.property('url')
+      expect(request[0].url).to.equal(`${ENDPOINT_URL_BASE}&userId=ortb2userid`);
+
+      req[0].params.userId = 'different_user_id';
+      request = config.runWithBidder('adnuntius', () => spec.buildRequests(req, { bids: req }));
       expect(request.length).to.equal(1);
       expect(request[0]).to.have.property('url')
       expect(request[0].url).to.equal(`${ENDPOINT_URL_BASE}&userId=different_user_id`);
@@ -1693,7 +1715,7 @@ describe('adnuntiusBidAdapter', function () {
       expect(interpretedResponse[0].meta.advertiserDomains).to.have.lengthOf(1);
       expect(interpretedResponse[0].meta.advertiserDomains[0]).to.equal('adnuntius.com');
       expect(interpretedResponse[0].vastXml).to.equal(ad.vastXml);
-      expect(JSON.stringify(interpretedResponse[0].native)).to.equal('{"link":{"url":"https://whatever.com"},"assets":[{"id":1,"required":1,"img":{"url":"http://something.com/something.png"}}]}');
+      expect(JSON.stringify(interpretedResponse[0].native.ortb)).to.equal('{"link":{"url":"https://whatever.com"},"assets":[{"id":1,"required":1,"img":{"url":"http://something.com/something.png"}}]}');
     });
 
     it('should pass legacy requests on correctly', function () {
@@ -1701,7 +1723,7 @@ describe('adnuntiusBidAdapter', function () {
       expect(request.length).to.equal(1);
       expect(request[0]).to.have.property('bid');
       expect(request[0]).to.have.property('data');
-      expect(request[0].data).to.equal('{"adUnits":[{"auId":"0000000000000551","targetId":"adn-0000000000000551","adType":"NATIVE","nativeRequest":{"ortb":{"ver":"1.2","assets":[{"id":0,"required":1,"img":{"type":3,"w":250,"h":250}}]}},"dimensions":[[200,200],[300,300]]}]}');
+      expect(request[0].data).to.equal('{"adUnits":[{"auId":"0000000000000551","targetId":"adn-0000000000000551","adType":"NATIVE","nativeRequest":{"ortb":{"ver":"1.2","assets":[{"id":0,"required":1,"img":{"type":3,"w":250,"h":250}}],"eventtrackers":[{"event":1,"methods":[1]},{"event":2,"methods":[1]}]}},"dimensions":[[200,200],[300,300]]}]}');
     });
 
     it('should return valid legacy response when passed valid server response', function () {

@@ -21,7 +21,7 @@ function isBidRequestValid(bid) {
     return false;
   }
 
-  return !!bid.params.domainId;
+  return !!bid.params.domainId && !!bid.params.placement;
 }
 
 /**
@@ -102,7 +102,7 @@ function buildRequests(validBidRequests, bidderRequest) {
     data: bidsParams,
     currency: currency,
     options: {
-      withCredentials: false,
+      withCredentials: true,
       contentType: 'application/json'
     }
   });
@@ -160,6 +160,7 @@ function getBidData(bid) {
     deviceUa: bid.ortb2?.device?.ua,
     domain: bid.ortb2?.site?.publisher?.domain,
     domainId: bid.params.domainId,
+    placement: bid.params.placement,
     code: bid.adUnitCode
   };
 

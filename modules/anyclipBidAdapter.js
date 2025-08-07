@@ -3,7 +3,7 @@ import {registerBidder} from '../src/adapters/bidderFactory.js';
 import {
   buildRequests,
   getUserSyncs,
-  interpretResponse,
+  interpretResponse, onBidBillable, onBidWon
 } from '../libraries/xeUtils/bidderUtils.js';
 import {deepAccess, getBidIdParameter, isArray, logError} from '../src/utils.js';
 
@@ -48,7 +48,9 @@ export const spec = {
     return {...builtRequests, data: JSON.stringify(updatedRequests)}
   },
   interpretResponse,
-  getUserSyncs
+  getUserSyncs,
+  onBidBillable: (bid) => onBidBillable(bid, ENDPOINT),
+  onBidWon: (bid) => onBidWon(bid, ENDPOINT),
 }
 
 registerBidder(spec);

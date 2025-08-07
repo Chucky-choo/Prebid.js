@@ -1,34 +1,17 @@
-import {deepAccess, logError, isArray, isFn, isPlainObject, parseSizesInput} from '../../src/utils.js';
+import {deepAccess, logError, isArray} from '../../src/utils.js';
 import {ajax} from '../../src/ajax.js';
 import {ortbConverter} from "../ortbConverter/converter.js";
-import {getAdUnitSizes} from "../sizeUtils/sizeUtils.js";
 
-export function getBidFloor(bid, currency = 'USD') {
-  if (!isFn(bid.getFloor)) {
-    return null;
-  }
-
-  let floor = bid.getFloor({
-    currency,
-    mediaType: '*',
-    size: '*'
-  });
-
-  if (isPlainObject(floor) && !isNaN(floor.floor) && floor.currency === currency) {
-    return floor.floor;
-  }
-
-  return null;
-}
+const BID_TRACKING_ENDPOINT = 'https://your.analytics.endpoint';
 
 /**
  * Universal handler for when a bid is won.
  * @param {Object} bid
  */
-export function onBidWon(bid, ENDPOINT) {
+export function onBidWon(bid) {
   try {
     const payload = buildPayload(bid, 'bidWon');
-    sendTracking(`${ENDPOINT}/won`, payload);
+    sendTracking(`${BID_TRACKING_ENDPOINT}/won`, payload);
   } catch (e) {
     logError('Error in onBidWon:', e);
   }
@@ -38,10 +21,10 @@ export function onBidWon(bid, ENDPOINT) {
  * Universal handler for when a bid becomes billable.
  * @param {Object} bid
  */
-export function onBidBillable(bid, ENDPOINT) {
+export function onBidBillable(bid) {
   try {
     const payload = buildPayload(bid, 'bidBillable');
-    sendTracking(`${ENDPOINT}/billable`, payload);
+    sendTracking(`${BID_TRACKING_ENDPOINT}/billable`, payload);
   } catch (e) {
     logError('Error in onBidBillable:', e);
   }
@@ -89,7 +72,6 @@ export const converter = ortbConverter({
   imp(buildImp, bidRequest) {
     buildImp.ext = {
       bidder: {
-
         env: bidRequest.params.env,
         pid: bidRequest.params.pid,
         ext: bidRequest.params.ext
@@ -110,63 +92,19 @@ export const converter = ortbConverter({
  * @returns {Object}
  */
 export function buildRequests(validBidRequests, bidderRequest, endpoint) {
-  const {refererInfo = {}, gdprConsent = {}, uspConsent} = bidderRequest;
-
-  const requests = validBidRequests.map((req) => {
-    const ortb = converter.toORTB({
-      bidRequests: [req],
-      bidderRequest
-    });
-
-    const imp = ortb.imp?.[0] || {};
-    const video = imp.video;
-    const banner = imp.banner;
-
-    return {
-      tmax: bidderRequest.timeout || 0,
-      bidId: req.bidId,
-      auctionId: req.ortb2?.source?.tid,
-      transactionId: req.ortb2Imp?.ext?.tid,
-      sizes: parseSizesInput(getAdUnitSizes(req)),
-      banner,
-      video,
-      schain: req.schain,
-      location: {
-        page: refererInfo.page,
-        location: refererInfo.location,
-        domain: refererInfo.domain,
-        whost: typeof window !== 'undefined' ? window.location.host : '',
-        ref: refererInfo.ref,
-        isAmp: refererInfo.isAmp
-      },
-      device: {
-        ua: navigator.userAgent,
-        lang: navigator.language
-      },
-      env: {
-        publisherId: req.params.publisherId,
-        supplyTagId: req.params.supplyTagId,
-        floor: getBidFloor(req)
-      },
-      ortb2: req.ortb2,
-      ortb2Imp: req.ortb2Imp,
-      tz: new Date().getTimezoneOffset(),
-      ext: req.params.ext,
-      bc: req.bidRequestsCount,
-      userEids: req.userIdAsEids || [],
-      gdprConsent,
-      usPrivacy: uspConsent || ''
-    };
+  const ortbRequest = converter.toORTB({
+    bidRequests: validBidRequests,
+    bidderRequest
   });
 
   return {
     method: 'POST',
-    url: endpoint + '/bid',
-    data: JSON.stringify(requests),
+    url: `${endpoint}/bid`,
+    data: JSON.stringify(ortbRequest),
     withCredentials: true,
     bidderRequest,
     options: {
-      contentType: 'application/json',
+      contentType: 'application/json'
     }
   };
 }

@@ -1,5 +1,6 @@
 import {expect} from 'chai';
 import {config} from 'src/config.js';
+import * as ajaxModule from 'src/ajax.js';
 import {spec} from 'modules/anyclipBidAdapter.js';
 import {deepClone} from 'src/utils';
 import {getBidFloor} from '../../../libraries/xeUtils/bidderUtils.js';
@@ -58,6 +59,16 @@ const displayBidderRequest = {
 };
 
 describe('anyclipBidAdapter', () => {
+  let ajaxStub;
+
+  beforeEach(() => {
+    ajaxStub = sinon.stub(ajaxModule, 'ajax');
+  });
+
+  afterEach(() => {
+    ajaxStub.restore();
+  });
+
   describe('isBidRequestValid', function () {
     it('should return false when request params is missing', function () {
       const invalidRequest = deepClone(defaultRequest);
@@ -444,6 +455,66 @@ describe('anyclipBidAdapter', () => {
       };
       const result = getBidFloor(bid);
       expect(result).to.equal(5);
+    });
+
+    describe('onBidWon', () => {
+      it('should call ajax with bid.nurl if present', () => {
+        const bid = { nurl: 'https://example.com/win' };
+        spec.onBidWon(bid);
+        expect(ajaxStub.calledOnceWith('https://example.com/win')).to.be.true;
+      });
+
+      it('should not call ajax if bid.nurl is not present', () => {
+        const bid = {};
+        spec.onBidWon(bid);
+        expect(ajaxStub.called).to.be.false;
+      });
+    });
+
+    describe('onBidBillable', () => {
+      it('should call ajax with bid.burl if present', () => {
+        const bid = { burl: 'https://example.com/billable' };
+        spec.onBidBillable(bid);
+        expect(ajaxStub.calledOnceWith('https://example.com/billable')).to.be.true;
+      });
+
+      it('should not call ajax if bid.burl is not present', () => {
+        const bid = {};
+        spec.onBidBillable(bid);
+        expect(ajaxStub.called).to.be.false;
+      });
+    });
+
+    describe('onTimeout', () => {
+      it('should call ajax with pberror URL and JSON bid data', () => {
+        const bid = {
+          bidderRequest: {
+            bids: [{ bidId: 'timeout123' }]
+          }
+        };
+        spec.onTimeout(bid, ENDPOINT);
+
+        const expectedUrl = `${ENDPOINT}/pberror?b=timeout123`;
+        expect(ajaxStub.calledOnce).to.be.true;
+        expect(ajaxStub.args[0][0]).to.equal(expectedUrl);
+        expect(ajaxStub.args[0][2]).to.equal(JSON.stringify(bid));
+      });
+    });
+
+    describe('onBidderError', () => {
+      it('should call ajax with pberror URL and JSON bid data', () => {
+        const bid = {
+          bidderRequest: {
+            bids: [{ bidId: 'error123' }]
+          }
+        };
+        spec.onBidderError(bid, ENDPOINT);
+
+        const expectedUrl = `${ENDPOINT}/pberror?b=error123`;
+        expect(ajaxStub.calledOnce).to.be.true;
+        expect(ajaxStub.args[0][0]).to.equal(expectedUrl);
+        expect(ajaxStub.args[0][2]).to.equal(JSON.stringify(bid));
+      });
     });
   });
 });

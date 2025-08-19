@@ -4,6 +4,10 @@ import {
   buildRequests,
   getUserSyncs,
   interpretResponse,
+  onBidBillable,
+  onBidderError,
+  onBidWon,
+  onTimeout,
 } from '../libraries/xeUtils/bidderUtils.js';
 import {deepAccess, getBidIdParameter, isArray, logError} from '../src/utils.js';
 
@@ -48,7 +52,11 @@ export const spec = {
     return {...builtRequests, data: JSON.stringify(updatedRequests)}
   },
   interpretResponse,
-  getUserSyncs
+  getUserSyncs,
+  onBidWon,
+  onBidBillable,
+  onTimeout: bid => onTimeout(bid, ENDPOINT),
+  onBidderError: bid => onBidderError(bid, ENDPOINT)
 }
 
 registerBidder(spec);

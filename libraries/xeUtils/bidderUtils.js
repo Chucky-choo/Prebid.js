@@ -1,5 +1,6 @@
 import {deepAccess, getBidIdParameter, isFn, logError, isArray, parseSizesInput, isPlainObject} from '../../src/utils.js';
 import {getAdUnitSizes} from '../sizeUtils/sizeUtils.js';
+import {ajax} from "../../src/ajax.js";
 
 export function getBidFloor(bid, currency = 'USD') {
   if (!isFn(bid.getFloor)) {
@@ -153,4 +154,24 @@ export function getUserSyncs(syncOptions, serverResponses, gdprConsent = {}, usp
   }
 
   return syncs;
+}
+
+export function onBidWon(bid) {
+  if (bid.nurl) {
+    ajax(bid.nurl, null);
+  }
+}
+
+export function onBidBillable(bid) {
+  if (bid.burl) {
+    ajax(bid.burl, null);
+  }
+}
+
+export function onTimeout(bid, endpoint) {
+  ajax(`${endpoint}/pberror?b=${bid.bidderRequest.bids[0].bidId}`, () => {}, JSON.stringify(bid));
+}
+
+export function onBidderError(bid, endpoint) {
+  ajax(`${endpoint}/pberror?b=${bid.bidderRequest.bids[0].bidId}`, () => {}, JSON.stringify(bid));
 }

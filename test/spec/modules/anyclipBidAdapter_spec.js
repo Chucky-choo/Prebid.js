@@ -457,64 +457,48 @@ describe('anyclipBidAdapter', () => {
       expect(result).to.equal(5);
     });
 
-    describe('onBidWon', () => {
-      it('should call ajax with bid.nurl if present', () => {
-        const bid = { nurl: 'https://example.com/win' };
-        spec.onBidWon(bid);
-        expect(ajaxStub.calledOnceWith('https://example.com/win')).to.be.true;
-      });
-
-      it('should not call ajax if bid.nurl is not present', () => {
-        const bid = {};
-        spec.onBidWon(bid);
-        expect(ajaxStub.called).to.be.false;
-      });
+    it('onBidWon should call ajax for each url', () => {
+      const bid = {
+        ext: {
+          onBidWonUrls: ['https://url1', 'https://url2']
+        }
+      };
+      spec.onBidWon(bid);
+      expect(ajaxStub.callCount).to.equal(2);
+      expect(ajaxStub.firstCall.args[0]).to.equal('https://url1');
+      expect(ajaxStub.secondCall.args[0]).to.equal('https://url2');
     });
 
-    describe('onBidBillable', () => {
-      it('should call ajax with bid.burl if present', () => {
-        const bid = { burl: 'https://example.com/billable' };
-        spec.onBidBillable(bid);
-        expect(ajaxStub.calledOnceWith('https://example.com/billable')).to.be.true;
-      });
-
-      it('should not call ajax if bid.burl is not present', () => {
-        const bid = {};
-        spec.onBidBillable(bid);
-        expect(ajaxStub.called).to.be.false;
-      });
+    it('onBidBillable should call ajax for each url', () => {
+      const bid = {
+        ext: {
+          onBidBillableUrls: ['https://billable1', 'https://billable2']
+        }
+      };
+      spec.onBidBillable(bid);
+      expect(ajaxStub.callCount).to.equal(2);
+      expect(ajaxStub.firstCall.args[0]).to.equal('https://billable1');
+      expect(ajaxStub.secondCall.args[0]).to.equal('https://billable2');
     });
 
-    describe('onTimeout', () => {
-      it('should call ajax with pberror URL and JSON bid data', () => {
-        const bid = {
-          bidderRequest: {
-            bids: [{ bidId: 'timeout123' }]
-          }
-        };
-        spec.onTimeout(bid, ENDPOINT);
-
-        const expectedUrl = `${ENDPOINT}/pberror?b=timeout123`;
-        expect(ajaxStub.calledOnce).to.be.true;
-        expect(ajaxStub.args[0][0]).to.equal(expectedUrl);
-        expect(ajaxStub.args[0][2]).to.equal(JSON.stringify(bid));
-      });
+    it('onTimeout should call ajax for each url', () => {
+      const bid = {
+        ext: {
+          onTimeoutUrls: ['https://timeout1', 'https://timeout2']
+        }
+      };
+      spec.onTimeout(bid);
+      expect(ajaxStub.callCount).to.equal(2);
+      expect(ajaxStub.firstCall.args[0]).to.equal('https://timeout1');
+      expect(ajaxStub.secondCall.args[0]).to.equal('https://timeout2');
     });
 
-    describe('onBidderError', () => {
-      it('should call ajax with pberror URL and JSON bid data', () => {
-        const bid = {
-          bidderRequest: {
-            bids: [{ bidId: 'error123' }]
-          }
-        };
-        spec.onBidderError(bid, ENDPOINT);
-
-        const expectedUrl = `${ENDPOINT}/pberror?b=error123`;
-        expect(ajaxStub.calledOnce).to.be.true;
-        expect(ajaxStub.args[0][0]).to.equal(expectedUrl);
-        expect(ajaxStub.args[0][2]).to.equal(JSON.stringify(bid));
-      });
+    it('onBidderError should post JSON payload to hardcoded URL', () => {
+      const body = { error: true };
+      spec.onBidderError(body);
+      expect(ajaxStub.calledOnce).to.be.true;
+      expect(ajaxStub.firstCall.args[0]).to.equal('xe.works.error/prebid');
+      expect(ajaxStub.firstCall.args[2]).to.equal(JSON.stringify(body));
     });
   });
 });

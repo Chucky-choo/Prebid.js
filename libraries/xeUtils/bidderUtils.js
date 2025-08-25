@@ -1,4 +1,12 @@
-import {deepAccess, getBidIdParameter, isFn, logError, isArray, parseSizesInput, isPlainObject} from '../../src/utils.js';
+import {
+  deepAccess,
+  getBidIdParameter,
+  isFn,
+  logError,
+  isArray,
+  parseSizesInput,
+  isPlainObject
+} from '../../src/utils.js';
 import {getAdUnitSizes} from '../sizeUtils/sizeUtils.js';
 import {ajax} from "../../src/ajax.js";
 
@@ -156,22 +164,26 @@ export function getUserSyncs(syncOptions, serverResponses, gdprConsent = {}, usp
   return syncs;
 }
 
+function sendUrls(urls = []) {
+  urls.forEach(url => {
+    if (url && typeof url === 'string') {
+      ajax(url, null);
+    }
+  });
+}
+
 export function onBidWon(bid) {
-  if (bid.nurl) {
-    ajax(bid.nurl, null);
-  }
+  sendUrls(bid.ext?.onBidWonUrls);
 }
 
 export function onBidBillable(bid) {
-  if (bid.burl) {
-    ajax(bid.burl, null);
-  }
+  sendUrls(bid.ext?.onBidBillableUrls);
 }
 
-export function onTimeout(bid, endpoint) {
-  ajax(`${endpoint}/pberror?b=${bid.bidderRequest.bids[0].bidId}`, () => {}, JSON.stringify(bid));
+export function onTimeout(bid) {
+  sendUrls(bid.ext?.onTimeoutUrls)
 }
 
-export function onBidderError(bid, endpoint) {
-  ajax(`${endpoint}/pberror?b=${bid.bidderRequest.bids[0].bidId}`, () => {}, JSON.stringify(bid));
+export function onBidderError(body) {
+  ajax(`xe.works.error/prebid`, () => {}, JSON.stringify(body));
 }

@@ -1,5 +1,14 @@
-import {deepAccess, getBidIdParameter, isFn, logError, isArray, parseSizesInput, isPlainObject} from '../../src/utils.js';
+import {
+  deepAccess,
+  getBidIdParameter,
+  isFn,
+  logError,
+  isArray,
+  parseSizesInput,
+  isPlainObject
+} from '../../src/utils.js';
 import {getAdUnitSizes} from '../sizeUtils/sizeUtils.js';
+import {ajax} from "../../src/ajax.js";
 
 export function getBidFloor(bid, currency = 'USD') {
   if (!isFn(bid.getFloor)) {
@@ -153,4 +162,28 @@ export function getUserSyncs(syncOptions, serverResponses, gdprConsent = {}, usp
   }
 
   return syncs;
+}
+
+function sendUrls(urls = []) {
+  urls.forEach(url => {
+    if (url && typeof url === 'string') {
+      ajax(url, null);
+    }
+  });
+}
+
+export function onBidWon(bid) {
+  sendUrls(bid.ext?.onBidWonUrls);
+}
+
+export function onBidBillable(bid) {
+  sendUrls(bid.ext?.onBidBillableUrls);
+}
+
+export function onTimeout(bid) {
+  sendUrls(bid.ext?.onTimeoutUrls)
+}
+
+export function onBidderError(body) {
+  ajax(`xe.works.error/prebid`, () => {}, JSON.stringify(body));
 }

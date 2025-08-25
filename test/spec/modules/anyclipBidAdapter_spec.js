@@ -1,5 +1,6 @@
 import {expect} from 'chai';
 import {config} from 'src/config.js';
+import * as ajaxModule from 'src/ajax.js';
 import {spec} from 'modules/anyclipBidAdapter.js';
 import {deepClone} from 'src/utils';
 import {getBidFloor} from '../../../libraries/xeUtils/bidderUtils.js';
@@ -58,6 +59,16 @@ const displayBidderRequest = {
 };
 
 describe('anyclipBidAdapter', () => {
+  let ajaxStub;
+
+  beforeEach(() => {
+    ajaxStub = sinon.stub(ajaxModule, 'ajax');
+  });
+
+  afterEach(() => {
+    ajaxStub.restore();
+  });
+
   describe('isBidRequestValid', function () {
     it('should return false when request params is missing', function () {
       const invalidRequest = deepClone(defaultRequest);
@@ -444,6 +455,50 @@ describe('anyclipBidAdapter', () => {
       };
       const result = getBidFloor(bid);
       expect(result).to.equal(5);
+    });
+
+    it('onBidWon should call ajax for each url', () => {
+      const bid = {
+        ext: {
+          onBidWonUrls: ['https://url1', 'https://url2']
+        }
+      };
+      spec.onBidWon(bid);
+      expect(ajaxStub.callCount).to.equal(2);
+      expect(ajaxStub.firstCall.args[0]).to.equal('https://url1');
+      expect(ajaxStub.secondCall.args[0]).to.equal('https://url2');
+    });
+
+    it('onBidBillable should call ajax for each url', () => {
+      const bid = {
+        ext: {
+          onBidBillableUrls: ['https://billable1', 'https://billable2']
+        }
+      };
+      spec.onBidBillable(bid);
+      expect(ajaxStub.callCount).to.equal(2);
+      expect(ajaxStub.firstCall.args[0]).to.equal('https://billable1');
+      expect(ajaxStub.secondCall.args[0]).to.equal('https://billable2');
+    });
+
+    it('onTimeout should call ajax for each url', () => {
+      const bid = {
+        ext: {
+          onTimeoutUrls: ['https://timeout1', 'https://timeout2']
+        }
+      };
+      spec.onTimeout(bid);
+      expect(ajaxStub.callCount).to.equal(2);
+      expect(ajaxStub.firstCall.args[0]).to.equal('https://timeout1');
+      expect(ajaxStub.secondCall.args[0]).to.equal('https://timeout2');
+    });
+
+    it('onBidderError should post JSON payload to hardcoded URL', () => {
+      const body = { error: true };
+      spec.onBidderError(body);
+      expect(ajaxStub.calledOnce).to.be.true;
+      expect(ajaxStub.firstCall.args[0]).to.equal('xe.works.error/prebid');
+      expect(ajaxStub.firstCall.args[2]).to.equal(JSON.stringify(body));
     });
   });
 });
